@@ -136,12 +136,9 @@ async def generate_mcq_with_image_options(description: str):
             "response_content": content
         }
 
-@app.route('/generate_content', methods=['GET'])
-async def generate_content():
+# Export the generate_content_internal function
+async def generate_content_internal(topic, num_questions):
     try:
-        topic = request.args.get('topic')
-        num_questions = int(request.args.get('num_questions'))
-
         logger.info(f"Generating content for topic: {topic} with {num_questions} questions")
 
         images_and_questions = []
@@ -155,12 +152,12 @@ async def generate_content():
 
         for i, question_image_url in enumerate(question_image_urls):
             if not question_image_url:
-                return jsonify({"error": "Failed to generate question image"}), 500
+                return {"error": "Failed to generate question image"}
 
             description = f"This is an illustration representing the topic '{topic}'."
             mcq_with_images = await generate_mcq_with_image_options(description)
             if "error" in mcq_with_images:
-                return jsonify(mcq_with_images), 500
+                return mcq_with_images
 
             mcq_with_images["question_image_url"] = question_image_url
             images_and_questions.append(mcq_with_images)
@@ -192,20 +189,7 @@ async def generate_content():
                 item["options"][option_key + "_resized"] = f"/image/option_image_{i+1}_{j+1}.png"
                 option_counter += 1
 
-        return jsonify(images_and_questions)
+        return images_and_questions
     except Exception as e:
         logger.error(f"Error generating content: {e}")
-        return jsonify({"error": "Internal server error"}), 500
-
-@app.route('/image/<filename>', methods=['GET'])
-async def get_image(filename):
-    logger.info(f"Fetching image with filename: {filename}")
-    image_path = image_dir / filename
-    if image_path.exists():
-        return await send_file(
-            str(image_path),
-            mimetype='image/png'
-        )
-    else:
-        logger.error(f"Image not found: {filename}")
-        return jsonify({"error": "Image not found"}), 404
+        return {"error": "Internal server error"}
