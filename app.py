@@ -2,10 +2,7 @@
 from flask import Flask, request, jsonify
 import json
 import asyncio
-from m import generate_quiz
-from c import generate_quizc
-from fill import generate_quiz1
-from match import generate
+
 from images import generate_content_internal
 
 app = Flask(__name__)
